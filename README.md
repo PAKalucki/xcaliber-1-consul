@@ -1,3 +1,6 @@
+Zadanie
+=======
+
 ZAD 1
 Na maszynach wirtualnych VirtualBox lub Vmware stwórz cluster consula z 2 nodów.
 W consulowym key/value store stwórz folder 'domains' z kluczami o dowolnych nazwach – których
@@ -23,3 +26,15 @@ Za pomocą consul templates wygeneruj plik '/root/whitelist'
 Gdzie $IP to jeden z adresow ip z value danego klucza.
 Użyj obydwu folderów ‘domains’ oraz ‘whitelist’ gdzie lista domen z ‘domains’ będzie użyta do
 odpowiedniego odpytania ‘whitelist’.
+
+About
+=====
+
+Tresc nie precyzuje jak to zrobic, pozwolilem sobie skorzystac z packera i ansible.
+
+versions:  
+VirtualBox Version 5.2.34_Ubuntu  
+Ansible 2.9.6  
+Packer 1.5.5  
+
+Playbook wykorzystuje pakiet python-consul  

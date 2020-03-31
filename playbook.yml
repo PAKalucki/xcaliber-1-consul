@@ -1,0 +1,60 @@
+---
+- hosts: default
+  become: True
+  tasks:
+    - name: "Download Consul"
+      get_url:
+        dest: /tmp/consul_{{ consul_version }}_linux_amd64.zip
+        url: https://releases.hashicorp.com/consul/{{ consul_version }}/consul_{{ consul_version }}_linux_amd64.zip
+        validate_certs: no
+
+    - name: "Unpack Consul archive"
+      unarchive:
+        src: /tmp/consul_{{ consul_version }}_linux_amd64.zip 
+        dest: /tmp 
+        remote_src: yes
+
+    - name: "Copy Consul binary"
+      copy:
+        dest: /usr/local/bin/consul 
+        src: /tmp/consul 
+        remote_src: yes 
+        mode: '0750'
+    
+    - name: "Create Consul directories"
+      file:
+        name: "{{ item }}"
+        state: directory
+        mode: '0755'
+      loop:
+        - "{{ consul_config_dir }}"
+        - "{{ consul_data_dir }}"
+    
+    - name: "Template Consul service file"
+      template:
+        dest: /etc/systemd/system/consul.service
+        src: consul.service.j2 
+        owner: root
+        
+    - name: "Template Consul configuration"
+      template:
+        dest: "{{ consul_config_dir }}/server.json"
+        src: server.json.j2 
+        mode: '0644' 
+
+    - name: "Enable Consul service"
+      service:
+        name: consul
+        state: started
+        enabled: yes
+
+    - name: "Add entries to Consul CV"
+      consul_kv:
+        value: "{{ item.value }}"
+        key: "{{ item.key }}"
+      loop:
+        - { key: 'domains\domain1', value: 'sth.pl' }
+        - { key: 'domains\domain2', value: 'example.com' }
+        - { key: 'whitelist\example.com\whitelist-1', value: '1.1.1.1' }
+        - { key: 'whitelist\example.com\whitelist-2', value: '1.1.1.2' }
+        - { key: 'whitelist\example.com\whitelist-3', value: '1.1.1.3' }
