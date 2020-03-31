@@ -2,24 +2,33 @@
 - hosts: default
   become: True
   tasks:
-    - name: "Download Consul"
+    - name: "Download Consul and Consul template"
       get_url:
-        dest: /tmp/consul_{{ consul_version }}_linux_amd64.zip
-        url: https://releases.hashicorp.com/consul/{{ consul_version }}/consul_{{ consul_version }}_linux_amd64.zip
+        dest: /tmp
+        url: "{{ item }}"
         validate_certs: no
+      loop:
+        - "https://releases.hashicorp.com/consul-template/{{ consult_template_version }}/consul-template_{{ consult_template_version }}_linux_amd64.zip"
+        - "https://releases.hashicorp.com/consul/{{ consul_version }}/consul_{{ consul_version }}_linux_amd64.zip"
 
-    - name: "Unpack Consul archive"
+    - name: "Unpack Consul archives"
       unarchive:
-        src: /tmp/consul_{{ consul_version }}_linux_amd64.zip 
+        src: "{{ item }}"
         dest: /tmp 
         remote_src: yes
+      loop:
+        - "/tmp/consul_{{ consul_version }}_linux_amd64.zip"
+        - "/tmp/consul-template_{{ consult_template_version }}_linux_amd64.zip"
 
-    - name: "Copy Consul binary"
+    - name: "Copy Consul binaries"
       copy:
-        dest: /usr/local/bin/consul 
-        src: /tmp/consul 
+        dest: "/usr/local/bin/{{ item }}" 
+        src: "/tmp/{{ item }}"
         remote_src: yes 
-        mode: '0750'
+        mode: '0755'
+      loop:
+        - consul
+        - consul-template
     
     - name: "Create Consul directories"
       file:
@@ -29,6 +38,7 @@
       loop:
         - "{{ consul_config_dir }}"
         - "{{ consul_data_dir }}"
+        - /etc/consul-template
     
     - name: "Template Consul service file"
       template:
@@ -45,16 +55,24 @@
     - name: "Enable Consul service"
       service:
         name: consul
-        state: started
         enabled: yes
 
-    - name: "Add entries to Consul CV"
-      consul_kv:
-        value: "{{ item.value }}"
-        key: "{{ item.key }}"
-      loop:
-        - { key: 'domains\domain1', value: 'sth.pl' }
-        - { key: 'domains\domain2', value: 'example.com' }
-        - { key: 'whitelist\example.com\whitelist-1', value: '1.1.1.1' }
-        - { key: 'whitelist\example.com\whitelist-2', value: '1.1.1.2' }
-        - { key: 'whitelist\example.com\whitelist-3', value: '1.1.1.3' }
+    # - name: "Add entries to Consul CV"
+    #   consul_kv:
+    #     value: "{{ item.value }}"
+    #     key: "{{ item.key }}"
+    #   loop:
+    #     - { key: 'domains\domain1', value: 'sth.pl' }
+    #     - { key: 'domains\domain2', value: 'example.com' }
+    #     - { key: 'whitelist\example.com\whitelist-1', value: '1.1.1.1' }
+    #     - { key: 'whitelist\example.com\whitelist-2', value: '1.1.1.2' }
+    #     - { key: 'whitelist\example.com\whitelist-3', value: '1.1.1.3' }
+
+    # - name: "Copy consul template files"
+    #   copy:
+    #     dest: /etc/consul-template
+    #     src: "{{ item }}" 
+    #   with_fileglob: files/*
+
+    # - name: "Run consult template"
+    #   command: /usr/local/bin/consul-template -config /etc/consul-template/consul-template-config.hcl -once

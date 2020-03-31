@@ -36,5 +36,3 @@ versions:
 VirtualBox Version 5.2.34_Ubuntu  
 Ansible 2.9.6  
 Packer 1.5.5  
-
-Playbook wykorzystuje pakiet python-consul  

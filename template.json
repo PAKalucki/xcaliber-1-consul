@@ -1,6 +1,7 @@
 {
     "variables": {
       "consul_version": "1.7.2",
+      "consult_template_version": "0.24.1",
       "consul_config_dir": "/etc/consul",
       "consul_data_dir": "/var/consul",
       "consul_service_type": "server",
@@ -34,13 +35,17 @@
     "provisioners": [
       {
         "type": "shell",
-        "inline": "yum -y install epel-release unzip && yum -y update && yum clean all"
+        "inline": "yum -y install epel-release && yum -y install unzip python-pip && yum -y update && yum clean all"
+      },
+      {
+        "type": "shell",
+        "inline": "pip install python-consul"
       },
       {
       "type": "ansible",
       "playbook_file": "./playbook.yml",
       "extra_arguments": [
-        "-vvv", "--extra-vars", "consul_version={{user `consul_version`}} consul_config_dir={{user `consul_config_dir`}} consul_data_dir={{user `consul_data_dir`}} consul_service_type={{user `consul_service_type`}} server_join_address={{user `server_join_address`}}"
+        "-v", "--extra-vars", "consul_version={{user `consul_version`}} consult_template_version={{user `consult_template_version`}} consul_config_dir={{user `consul_config_dir`}} consul_data_dir={{user `consul_data_dir`}} consul_service_type={{user `consul_service_type`}} server_join_address={{user `server_join_address`}}"
       ]
       }]
   }

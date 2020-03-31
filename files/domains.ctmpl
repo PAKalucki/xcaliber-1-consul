@@ -1,0 +1,3 @@
+{{ range $key, $pairs := tree "domains\" | explode }}
+  #{{ key $key }}
+{{ end }}
