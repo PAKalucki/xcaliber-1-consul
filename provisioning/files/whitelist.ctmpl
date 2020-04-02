@@ -1,0 +1,8 @@
+{{ range $key, $pairs := tree "domains/" | explode }}
+{{ $name := key $key }}
+#{{ $name }}:
+  - whitelist:
+    {{ range $key, $pairs := tree ($name | printf "whitelist/%s/") | explode }}
+    - permit {{ key $key }} ;
+    {{ end }}
+{{ end }}

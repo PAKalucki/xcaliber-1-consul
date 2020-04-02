@@ -30,9 +30,8 @@ odpowiedniego odpytania ‘whitelist’.
 About
 =====
 
-Tresc nie precyzuje jak to zrobic, pozwolilem sobie skorzystac z packera i ansible.
+Tresc nie precyzuje czego moze uzyc, pozwolilem sobie skorzystac z vagranta i ansible.
 
 versions:  
-VirtualBox Version 5.2.34_Ubuntu  
 Ansible 2.9.6  
-Packer 1.5.5  
+Vagrant 2.2.7   

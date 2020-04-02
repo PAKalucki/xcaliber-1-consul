@@ -1,11 +1,12 @@
 {
   "server": {% if consul_service_type == 'server' %}true{% else %}false{% endif %},
   "datacenter": "dc1",
+  "ui": true,
   "data_dir": "{{ consul_data_dir }}",
   "log_level": "INFO",
   "node_name": "{{ ansible_hostname }}",
-  "bootstrap_expect": 2,
-  "bind_addr": "0.0.0.0",
+  "bootstrap_expect": 1,
+  "bind_addr": "{{ ansible_eth1.ipv4.address }}",
   "client_addr": "0.0.0.0"
-  {% if server_join_address is defined and server_join_address|length %} ,"retry_join": [{{ server_join_address }}] {% endif %}
+  {% if server_join_address is defined and server_join_address|length %} ,"retry_join": ["{{ server_join_address }}"] {% endif %}
 }

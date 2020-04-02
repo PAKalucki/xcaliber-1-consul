@@ -1,0 +1,116 @@
+---
+- hosts: all
+  become: True
+  vars:
+    consul_version: 1.7.2
+    consult_template_version: 0.24.1
+    consul_config_dir: /etc/consul
+    consul_data_dir: /var/consul
+    consul_service_type: server
+  tasks:
+    - name: "Install required packages with yum"
+      yum:
+        name: "{{ item }}"
+        state: present
+      loop:
+        - epel-release
+        - unzip
+        - python-pip
+
+    - name: "Install required packages with pip"
+      pip:
+        name: python-consul
+        state: present
+
+    - name: "Download Consul and Consul template"
+      get_url:
+        dest: /tmp
+        url: "{{ item }}"
+        validate_certs: no
+      loop:
+        - "https://releases.hashicorp.com/consul-template/{{ consult_template_version }}/consul-template_{{ consult_template_version }}_linux_amd64.zip"
+        - "https://releases.hashicorp.com/consul/{{ consul_version }}/consul_{{ consul_version }}_linux_amd64.zip"
+
+    - name: "Unpack Consul archives"
+      unarchive:
+        src: "{{ item }}"
+        dest: /tmp 
+        remote_src: yes
+      loop:
+        - "/tmp/consul_{{ consul_version }}_linux_amd64.zip"
+        - "/tmp/consul-template_{{ consult_template_version }}_linux_amd64.zip"
+
+    - name: "Copy Consul binaries"
+      copy:
+        dest: "/usr/local/bin/{{ item }}" 
+        src: "/tmp/{{ item }}"
+        remote_src: yes 
+        mode: '0755'
+      loop:
+        - consul
+        - consul-template
+    
+    - name: "Create Consul directories"
+      file:
+        name: "{{ item }}"
+        state: directory
+        mode: '0755'
+      loop:
+        - "{{ consul_config_dir }}"
+        - "{{ consul_data_dir }}"
+        - /etc/consul-template
+    
+    - name: "Template Consul service file"
+      template:
+        dest: /etc/systemd/system/consul.service
+        src: consul.service.j2 
+        owner: root
+
+    - name: "Template Consul configuration"
+      template:
+        dest: "{{ consul_config_dir }}/server.json"
+        src: server.json.j2 
+        mode: '0644'
+
+    - name: "Enable and start Consul service"
+      service:
+        name: consul
+        state: started
+        enabled: yes
+
+    - name: "Wait for Consul leader elected"
+      command: journalctl -xe -u consul
+      register: journalctl_output
+      until: journalctl_output.stdout.find("cluster leadership acquired") != -1
+      retries: 5
+      delay: 10
+
+    - name: "Add entries to Consul CV"
+      run_once: yes
+      consul_kv:
+        value: "{{ item.value }}"
+        key: "{{ item.key }}"
+      loop:
+        - { key: "domains/domain1", value: "sth.pl" }
+        - { key: "domains/domain2", value: "example.com" }
+        - { key: "whitelist/example.com/whitelist-1", value: "1.1.1.1" }
+        - { key: "whitelist/example.com/whitelist-2", value: "1.1.1.2" }
+        - { key: "whitelist/example.com/whitelist-3", value: "1.1.1.3" }
+        - { key: "whitelist/sth.pl/whitelist-1", value: "1.1.1.4" }
+        - { key: "whitelist/sth.pl/whitelist-2", value: "1.1.1.5" }
+        - { key: "whitelist/sth.pl/whitelist-3", value: "1.1.1.6" }
+
+    - name: "Copy consul template files"
+      copy:
+        dest: /etc/consul-template
+        src: "{{ item }}" 
+      with_fileglob: files/*
+
+    - name: "Run consult template"
+      command: /usr/local/bin/consul-template -config /etc/consul-template/consul-template-config.hcl -once
+
+    - name: "Display templated files"
+      command: "cat /root/{{ item }}"
+      loop:
+        - domains
+        - whitelist
