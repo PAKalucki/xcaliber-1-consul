@@ -24,8 +24,7 @@ Za pomocą consul templates wygeneruj plik '/root/whitelist'
  - permit $IP ;
  ...
 Gdzie $IP to jeden z adresow ip z value danego klucza.
-Użyj obydwu folderów ‘domains’ oraz ‘whitelist’ gdzie lista domen z ‘domains’ będzie użyta do
-odpowiedniego odpytania ‘whitelist’.
+Użyj obydwu folderów ‘domains’ oraz ‘whitelist’ gdzie lista domen z ‘domains’ będzie użyta do odpowiedniego odpytania ‘whitelist’.
 
 About
 =====
